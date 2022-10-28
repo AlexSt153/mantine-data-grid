@@ -50,7 +50,7 @@ const DateInput = ({ filter, onFilterChange, placeholder }: DateInputProps) => (
     value={Array.isArray(filter.value) ? null : toValue(filter.value)}
     onChange={(value) => onFilterChange({ ...filter, value: toString(value) })}
     placeholder={placeholder}
-    rightSection={<Filter />}
+    rightSection={<Filter size={20} />}
     allowFreeInput
   />
 );
@@ -60,7 +60,7 @@ const DateRangeInput = ({ filter, onFilterChange, placeholder }: DateInputProps)
     value={Array.isArray(filter.value) ? toValue(filter.value) : [null, null]}
     onChange={(value) => onFilterChange({ ...filter, value: toString(value) })}
     placeholder={placeholder}
-    rightSection={<Filter />}
+    rightSection={<Filter size={20} />}
   />
 );
 
@@ -122,6 +122,7 @@ export const createDateFilter = ({ title, fixedOperator, labels, placeholder = '
             }))}
             value={filter.op || DateFilterOperator.Equals}
             onChange={(op: DateFilterOperator) => onFilterChange({ ...filter, op })}
+            withinPortal
           />
         )}
 

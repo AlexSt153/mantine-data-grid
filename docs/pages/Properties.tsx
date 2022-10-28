@@ -174,6 +174,17 @@ export default function Properties() {
                 type: 'OnChangeCallback<DataGridPaginationState>',
                 description: 'Callback when page index or page size changed',
               },
+              {
+                name: 'paginationMode',
+                type: '"default" | "compact"',
+                description: '"compact" mode will only show pagination step without page size and current page info',
+              },
+              {
+                name: 'autoResetPageIndex',
+                type: 'boolean',
+                description:
+                  'If set to false, pagination will NOT be reset to the first page when page-altering state changes eg. data is updated, filters change, grouping changes, etc.',
+              },
             ],
           },
           {
@@ -218,6 +229,17 @@ export default function Properties() {
                 name: 'onSort',
                 type: 'OnChangeCallback<DataGridSortingState>',
                 description: 'Callback when sorting changed',
+              },
+            ],
+          },
+          {
+            group: 'Row Selection',
+            children: [
+              { name: 'withRowSelection', type: 'boolean', description: 'Enables row selection' },
+              {
+                name: 'onRowSelectionChange',
+                type: 'OnChangeCallback<RowSelectionState>',
+                description: 'Callback when row selection changed',
               },
             ],
           },

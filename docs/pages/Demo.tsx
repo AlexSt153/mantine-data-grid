@@ -106,6 +106,8 @@ export default function Demo() {
     loading: false,
     showEmpty: false,
     iconColor: theme.primaryColor,
+    paginationCompactMode: false,
+    autoResetPageIndex: true,
   });
 
   const onPageChange = (e: DataGridPaginationState) => {
@@ -151,10 +153,12 @@ export default function Demo() {
           highlightOnHover={state.highlightOnHover}
           loading={state.loading}
           iconColor={state.iconColor}
+          autoResetPageIndex={state.autoResetPageIndex}
           onPageChange={onPageChange}
           onSort={onSort}
           onFilter={onFilter}
           onSearch={onSearch}
+          paginationMode={state.paginationCompactMode ? 'compact' : 'default'}
           columns={[
             {
               accessorKey: 'id',
@@ -348,6 +352,28 @@ export default function Demo() {
               })
             }
           />
+          {state.withPagination && (
+            <>
+              <Switch
+                label="Compact pagination"
+                checked={state.paginationCompactMode}
+                onChange={(e) =>
+                  update({
+                    paginationCompactMode: e.target.checked,
+                  })
+                }
+              />
+              <Switch
+                label="Auto reset page index"
+                checked={state.autoResetPageIndex}
+                onChange={(e) =>
+                  update({
+                    autoResetPageIndex: e.target.checked,
+                  })
+                }
+              />
+            </>
+          )}
           <div>
             <Text weight="bold">Font Size</Text>
             <Slider

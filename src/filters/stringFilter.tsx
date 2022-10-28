@@ -68,6 +68,7 @@ export const createStringFilter = ({
             }))}
             value={filter.op || StringFilterOperator.Includes}
             onChange={(op) => onFilterChange({ ...filter, op: op as StringFilterOperator })}
+            withinPortal
           />
         )}
 
@@ -75,7 +76,7 @@ export const createStringFilter = ({
           value={filter.value}
           onChange={(e) => onFilterChange({ ...filter, value: e.target.value })}
           placeholder={placeholder}
-          rightSection={<Filter />}
+          rightSection={<Filter size={20} />}
         />
       </>
     );

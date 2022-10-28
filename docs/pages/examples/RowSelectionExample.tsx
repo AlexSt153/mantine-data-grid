@@ -1,4 +1,4 @@
-import { ColumnFiltersState } from '@tanstack/react-table';
+import { RowSelectionState } from '@tanstack/react-table';
 import { useState } from 'react';
 import {
   booleanFilterFn,
@@ -10,19 +10,23 @@ import {
 } from '../../../src';
 import { demoData } from '../../demoData';
 
-export default function StateExample() {
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-
+export default function RowSelectionExample() {
+  const [selected, setSelected] = useState<RowSelectionState>({});
   return (
     <DataGrid
-      data={demoData.slice(0, 25)}
+      data={demoData}
       striped
       highlightOnHover
+      withGlobalFilter
+      withPagination
       withColumnFilters
-      onFilter={setColumnFilters}
+      withSorting
+      withColumnResizing
+      withRowSelection
       state={{
-        columnFilters,
+        rowSelection: selected,
       }}
+      onRowSelectionChange={setSelected}
       columns={[
         {
           accessorKey: 'text',
