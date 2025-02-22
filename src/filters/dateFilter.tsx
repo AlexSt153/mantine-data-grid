@@ -1,141 +1,170 @@
-import { Select, Text } from '@mantine/core';
-import { DatePicker, DateRangePicker } from '@mantine/dates';
-import { Filter } from 'tabler-icons-react';
-import { DataGridFilterFn, DataGridFilterProps } from '../types';
+import { DatePickerInput } from '@mantine/dates';
+import { IconFilter } from '@tabler/icons-react';
+import dayjs, { Dayjs } from 'dayjs';
+import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
+import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
+import { createOperatorFilter, OperatorFilterOptions } from './createOperatorFilter';
+import { DataGridFilterInput, DataGridFilterOperator } from './types';
 
-type FilterState = {
-  op: DateFilterOperator;
-  value: string | null | [string | null, string | null];
-};
+// eslint-disable-next-line import/no-named-as-default-member
+const { extend } = dayjs;
 
-export enum DateFilterOperator {
-  Equals = 'eq',
-  NotEquals = 'neq',
-  GreaterThan = 'gt',
-  GreaterThanOrEquals = 'gte',
-  LowerThan = 'lt',
-  LowerThanOrEquals = 'lte',
-  Range = 'range',
-}
+extend(isSameOrBefore);
+extend(isSameOrAfter);
 
-type DateInputProps = DataGridFilterProps<FilterState> & {
-  placeholder: string;
-};
+type DateValue = string | null | [string | null, string | null];
 
-function toValue(value: string | null): Date | null;
-function toValue(value: [string | null, string | null]): [Date | null, Date | null];
-function toValue(value: FilterState['value']): Date | null | [Date | null, Date | null];
-function toValue(value: FilterState['value']): Date | null | [Date | null, Date | null] {
-  if (Array.isArray(value)) {
-    return [toValue(value[0]), toValue(value[1])];
-  }
+function parseDate(value: string | null) {
   if (!value) return null;
-  const time = Date.parse(value);
-  if (isNaN(time)) return null;
-  return new Date(time);
+  const date = dayjs(value);
+  return date.isValid() ? date.toDate() : null;
+}
+function toString(value: Date | null): string | null {
+  return value?.toISOString() || null;
 }
 
-function toString(value: Date | null): string | null;
-function toString(value: [Date | null, Date | null]): [string | null, string | null];
-function toString(value: Date | null | [Date | null, Date | null]): FilterState['value'] {
-  if (Array.isArray(value)) {
-    return [toString(value[0]), toString(value[1])];
-  } else {
-    return value?.toISOString() || null;
-  }
+const getLeftValue = (value: DateValue) => (Array.isArray(value) ? dayjs(value[0]) : dayjs(Number.MIN_VALUE));
+const getRightValue = (value: DateValue) => (Array.isArray(value) ? dayjs(value[1]) : dayjs(Number.MAX_VALUE));
+
+function combineTimeAndDate(time: Date | null, date: Date | null) {
+  if (!time && !date) return null;
+  if (!time) return date;
+  if (!date) return time;
+  const hour = dayjs(time).hour();
+  const minute = dayjs(time).minute();
+  const dateAndTime = dayjs(date).hour(hour).minute(minute);
+  return dateAndTime.toDate();
 }
 
-const DateInput = ({ filter, onFilterChange, placeholder }: DateInputProps) => (
-  <DatePicker
-    value={Array.isArray(filter.value) ? null : toValue(filter.value)}
-    onChange={(value) => onFilterChange({ ...filter, value: toString(value) })}
-    placeholder={placeholder}
-    rightSection={<Filter size={20} />}
-    allowFreeInput
-  />
-);
-
-const DateRangeInput = ({ filter, onFilterChange, placeholder }: DateInputProps) => (
-  <DateRangePicker
-    value={Array.isArray(filter.value) ? toValue(filter.value) : [null, null]}
-    onChange={(value) => onFilterChange({ ...filter, value: toString(value) })}
-    placeholder={placeholder}
-    rightSection={<Filter size={20} />}
-  />
-);
-
-export type DateFilterOptions = {
-  title?: string;
-  fixedOperator?: DateFilterOperator;
-  labels?: Partial<Record<DateFilterOperator, string>>;
-  placeholder?: string;
-};
-export const createDateFilter = ({ title, fixedOperator, labels, placeholder = 'Filter value' }: DateFilterOptions) => {
-  const filterFn: DataGridFilterFn<any, FilterState> = (row, columnId, filter: FilterState) => {
-    if (!filter.value) return true;
-    const rowValue = new Date(row.getValue(columnId));
-    const op = filter.op || DateFilterOperator.Equals;
-    const value = toValue(filter.value);
-    if (
-      op === DateFilterOperator.Range &&
-      Array.isArray(value) &&
-      value.length === 2 &&
-      value[0] instanceof Date &&
-      value[1] instanceof Date
-    ) {
-      return value[0] <= rowValue && rowValue <= value[1];
-    } else if (value instanceof Date) {
-      switch (op) {
-        case DateFilterOperator.Equals:
-          return rowValue === value;
-        case DateFilterOperator.NotEquals:
-          return rowValue !== value;
-        case DateFilterOperator.GreaterThan:
-          return rowValue > value;
-        case DateFilterOperator.GreaterThanOrEquals:
-          return rowValue >= value;
-        case DateFilterOperator.LowerThan:
-          return rowValue < value;
-        case DateFilterOperator.LowerThanOrEquals:
-          return rowValue <= value;
-      }
-    }
-    return true;
-  };
-  filterFn.autoRemove = (val) => !val;
-
-  filterFn.init = () => ({
-    op: fixedOperator || DateFilterOperator.GreaterThan,
-    value: null,
-  });
-
-  filterFn.element = function DateFilter({ filter, onFilterChange }: DataGridFilterProps<FilterState>) {
-    return (
-      <>
-        {title && <Text>{title}</Text>}
-
-        {!fixedOperator && (
-          <Select
-            data={Object.entries(DateFilterOperator).map(([label, value]) => ({
-              value,
-              label: (labels && labels[value]) || label,
-            }))}
-            value={filter.op || DateFilterOperator.Equals}
-            onChange={(op: DateFilterOperator) => onFilterChange({ ...filter, op })}
-            withinPortal
+export function createDateFilterInput(withTime = false): DataGridFilterInput<DateValue> {
+  return function DateFilterInput({ value, onChange, ...rest }) {
+    if (Array.isArray(value)) {
+      return (
+        <>
+          <DatePickerInput
+            type="range"
+            {...rest}
+            value={[parseDate(value[0]), parseDate(value[1])]}
+            onChange={(value) => onChange([toString(value[0]), toString(value[1])])}
+            rightSection={<IconFilter size={20} />}
           />
-        )}
-
-        {filter.op === DateFilterOperator.Range ? (
-          <DateRangeInput filter={filter} placeholder={placeholder} onFilterChange={onFilterChange} />
-        ) : (
-          <DateInput filter={filter} placeholder={placeholder} onFilterChange={onFilterChange} />
-        )}
-      </>
-    );
+          {/*withTime && (
+            <TimeRangeInput
+              value={filterValue}
+              onChange={(value) =>
+                onFilterChange({ ...filter, value: toString(arrayToValue(value, filterValue, true)) })
+              }
+            />
+            )*/}
+        </>
+      );
+    } else {
+      return (
+        <>
+          <DatePickerInput
+            {...rest}
+            value={parseDate(value)}
+            onChange={(value) => onChange(toString(value))}
+            rightSection={<IconFilter size={20} />}
+          />
+          {/*withTime && (
+            <TimeInput
+              value={filterValue}
+              onChange={(value) =>
+                onFilterChange({ ...filter, value: toString(combineTimeAndDate(value, filterValue)) })
+              }
+            />
+            )*/}
+        </>
+      );
+    }
   };
+}
 
-  return filterFn;
+export const dateOperators = {
+  equals: (label = 'equals', withTime = false): DataGridFilterOperator<string | Date | Dayjs, DateValue> => ({
+    op: 'eq',
+    label,
+    filterFn: (rowValue, filterValue) => dayjs(rowValue).isSame(getLeftValue(filterValue), withTime ? 'minute' : 'day'),
+    element: createDateFilterInput(withTime),
+  }),
+  notEquals: (label = 'not equals', withTime = false): DataGridFilterOperator<string | Date | Dayjs, DateValue> => ({
+    op: 'neq',
+    label,
+    filterFn: (rowValue, filterValue) =>
+      !dayjs(rowValue).isSame(getLeftValue(filterValue), withTime ? 'minute' : 'day'),
+    element: createDateFilterInput(withTime),
+  }),
+  greaterThan: (label = 'GreaterThan', withTime = false): DataGridFilterOperator<string | Date | Dayjs, DateValue> => ({
+    op: 'gt',
+    label,
+    filterFn: (rowValue, filterValue) =>
+      dayjs(rowValue).isAfter(getLeftValue(filterValue), withTime ? 'minute' : 'day'),
+    element: createDateFilterInput(withTime),
+  }),
+  greaterThanOrEquals: (
+    label = 'GreaterThanOrEquals',
+    withTime = false
+  ): DataGridFilterOperator<string | Date | Dayjs, DateValue> => ({
+    op: 'gte',
+    label,
+    filterFn: (rowValue, filterValue) =>
+      dayjs(rowValue).isSameOrAfter(getLeftValue(filterValue), withTime ? 'minute' : 'day'),
+    element: createDateFilterInput(withTime),
+  }),
+  lowerThan: (label = 'LowerThan', withTime = false): DataGridFilterOperator<string | Date | Dayjs, DateValue> => ({
+    op: 'lt',
+    label,
+    filterFn: (rowValue, filterValue) =>
+      dayjs(rowValue).isBefore(getLeftValue(filterValue), withTime ? 'minute' : 'day'),
+    element: createDateFilterInput(withTime),
+  }),
+  lowerThanOrEquals: (
+    label = 'LowerThanOrEquals',
+    withTime = false
+  ): DataGridFilterOperator<string | Date | Dayjs, DateValue> => ({
+    op: 'lte',
+    label,
+    filterFn: (rowValue, filterValue) =>
+      dayjs(rowValue).isSameOrBefore(getLeftValue(filterValue), withTime ? 'minute' : 'day'),
+    element: createDateFilterInput(withTime),
+  }),
+  range: (label = 'Range', withTime = false): DataGridFilterOperator<string | Date | Dayjs, DateValue> => ({
+    op: 'range',
+    label,
+    filterFn: (rowValue, filterValue) => {
+      const rowDate = dayjs(rowValue);
+      return (
+        getLeftValue(filterValue).isSameOrBefore(rowDate, withTime ? 'minute' : 'day') &&
+        rowDate.isSameOrBefore(getRightValue(filterValue), withTime ? 'minute' : 'day')
+      );
+    },
+    element: createDateFilterInput(withTime),
+  }),
 };
 
-export const dateFilterFn = createDateFilter({});
+export const initDateFilterValue = (op: string, last?: DateValue): DateValue => {
+  if (op === 'range') {
+    return last && Array.isArray(last) ? last : [null, null];
+  } else {
+    return last && !Array.isArray(last) ? last : null;
+  }
+};
+
+export function createDateFilter(options?: Partial<OperatorFilterOptions<string | Date | Dayjs, DateValue>>) {
+  return createOperatorFilter({
+    init: initDateFilterValue,
+    operators: [
+      dateOperators.equals(),
+      dateOperators.notEquals(),
+      dateOperators.greaterThan(),
+      dateOperators.greaterThanOrEquals(),
+      dateOperators.lowerThan(),
+      dateOperators.lowerThanOrEquals(),
+      dateOperators.range(),
+    ],
+    ...options,
+  });
+}
+
+export const dateFilterFn = createDateFilter();

@@ -3,13 +3,19 @@ import { ColumnDef, RowData } from '@tanstack/react-table';
 
 export const getRowSelectionColumn = <TData extends RowData>(): ColumnDef<TData, unknown> => ({
   id: 'select',
-  header: ({ table }) => (
-    <Checkbox
-      indeterminate={table.getIsSomeRowsSelected()}
-      checked={table.getIsAllRowsSelected()}
-      onChange={table.getToggleAllRowsSelectedHandler()}
-    />
+  header: ({ table }) =>
+    table.options.enableMultiRowSelection !== false ? (
+      <Checkbox
+        indeterminate={table.getIsSomeRowsSelected()}
+        checked={table.getIsAllRowsSelected()}
+        onChange={table.getToggleAllRowsSelectedHandler()}
+      />
+    ) : null,
+  cell: ({ row }) => (
+    <Checkbox disabled={!row.getCanSelect()} checked={row.getIsSelected()} onChange={row.getToggleSelectedHandler()} />
   ),
-  cell: ({ row }) => <Checkbox checked={row.getIsSelected()} onChange={row.getToggleSelectedHandler()} />,
-  size: 24,
+  size: 44,
+  minSize: 44,
+  maxSize: 44,
+  enableResizing: false,
 });

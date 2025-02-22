@@ -1,9 +1,9 @@
-import { Button } from '@mantine/core';
-import { RowSelectionState } from '@tanstack/react-table';
+import { Button, Stack } from '@mantine/core';
 import { useState } from 'react';
 import {
-  booleanFilterFn,
   DataGrid,
+  DataGridFiltersState,
+  booleanFilterFn,
   dateFilterFn,
   highlightFilterValue,
   numberFilterFn,
@@ -11,21 +11,16 @@ import {
 } from '../../../src';
 import { demoData } from '../../demoData';
 
-export default function RowSelectionExample() {
-  const [data, setData] = useState(demoData);
-  const [selected, setSelected] = useState<RowSelectionState>({});
-
-  const removeSelected = () => {
-    const next = data.filter((_, i) => !selected[i]);
-    setSelected({});
-    setData(next);
-  };
+export default function ResetDefaultExample() {
+  const [filter, setFilter] = useState<DataGridFiltersState>([]);
 
   return (
-    <>
-      <Button onClick={removeSelected}>Remove Selected</Button>
+    <Stack>
+      <Button disabled={filter.length === 0} onClick={() => setFilter([])}>
+        Reset Filters
+      </Button>
       <DataGrid
-        data={data}
+        data={demoData}
         striped
         highlightOnHover
         withGlobalFilter
@@ -33,11 +28,10 @@ export default function RowSelectionExample() {
         withColumnFilters
         withSorting
         withColumnResizing
-        withRowSelection
         state={{
-          rowSelection: selected,
+          columnFilters: filter,
         }}
-        onRowSelectionChange={setSelected}
+        onFilter={setFilter}
         columns={[
           {
             accessorKey: 'text',
@@ -72,6 +66,6 @@ export default function RowSelectionExample() {
           },
         ]}
       />
-    </>
+    </Stack>
   );
 }

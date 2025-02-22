@@ -18,18 +18,19 @@ import {
 import { useState } from 'react';
 
 import {
+  createBooleanFilter,
   createDateFilter,
+  createStringFilter,
   DataGrid,
-  DataGridFilterFn,
   DataGridFiltersState,
   DataGridPaginationState,
   DataGridSortingState,
-  createBooleanFilter,
   highlightFilterValue,
-  createNumberFilter,
-  createStringFilter,
-  StringFilterOperator,
+  numberFilterFn,
+  stringFilterFn,
+  stringOperators,
 } from '../../src';
+import { createOperatorFilter } from '../../src/filters/createOperatorFilter';
 import { Data, demoData } from '../demoData';
 
 const sizeMap = new Map<string | number, string | number>([
@@ -45,30 +46,31 @@ const sizeMap = new Map<string | number, string | number>([
   [100, 'xl'],
 ]);
 
-const catFilter: DataGridFilterFn<Data, string[]> = (row, columnId, filter) => {
-  const rowValue = String(row.getValue(columnId));
-  return Array.isArray(filter) ? filter.includes(rowValue) : false;
-};
-catFilter.autoRemove = (val) => !val;
-catFilter.init = () => [];
-catFilter.element = function ({ filter, onFilterChange }) {
-  return (
-    <MultiSelect
-      data={[
-        { value: 'Peterbald', label: 'Peterbald' },
-        { value: 'Chartreux', label: 'Chartreux' },
-        { value: 'Highlander', label: 'Highlander' },
-        { value: 'Savannah', label: 'Savannah' },
-        { value: 'Birman', label: 'Birman' },
-        { value: 'Burmese', label: 'Burmese' },
-        { value: 'Siberian', label: 'Siberian' },
-      ]}
-      value={filter || []}
-      onChange={onFilterChange}
-      placeholder="Filter value"
-    />
-  );
-};
+const catFilter = createOperatorFilter<string, string[]>({
+  init: () => [],
+  operators: [
+    {
+      op: 'select',
+      filterFn: (rowValue, filterValue) => filterValue.includes(rowValue),
+      element: ({ onChange, value, ...rest }) => (
+        <MultiSelect
+          {...rest}
+          data={[
+            { value: 'Peterbald', label: 'Peterbald' },
+            { value: 'Chartreux', label: 'Chartreux' },
+            { value: 'Highlander', label: 'Highlander' },
+            { value: 'Savannah', label: 'Savannah' },
+            { value: 'Birman', label: 'Birman' },
+            { value: 'Burmese', label: 'Burmese' },
+            { value: 'Siberian', label: 'Siberian' },
+          ]}
+          value={value}
+          onChange={onChange}
+        />
+      ),
+    },
+  ],
+});
 
 const useStyles = createStyles((theme) => ({
   gridWrapper: {
@@ -94,14 +96,17 @@ export default function Demo() {
     height: '',
     width: '',
     withFixedHeader: false,
-    noEllipsis: false,
     withGlobalFilter: true,
     withPagination: true,
     withColumnFilters: true,
     withSorting: true,
+    withRowSelection: true,
+    withRowExpanding: true,
     noFlexLayout: false,
     withColumnResizing: true,
     striped: true,
+    withBorder: false,
+    withColumnBorders: false,
     highlightOnHover: true,
     loading: false,
     showEmpty: false,
@@ -135,21 +140,42 @@ export default function Demo() {
       <Grid.Col span={10} p="md">
         <DataGrid<Data>
           debug
-          data={state.showEmpty ? [] : state.withPagination ? demoData : demoData.slice(0, 25)}
+          data={state.showEmpty ? [] : state.withPagination ? demoData : demoData.slice(0, 30)}
           horizontalSpacing={state.horizontalSpacing}
           verticalSpacing={state.verticalSpacing}
           fontSize={state.fontSize}
           height={state.height}
           width={state.width}
           withFixedHeader={state.withFixedHeader}
-          noEllipsis={state.noEllipsis}
           withGlobalFilter={state.withGlobalFilter}
           withPagination={state.withPagination}
           withColumnFilters={state.withColumnFilters}
           withSorting={state.withSorting}
           withColumnResizing={state.withColumnResizing}
+          withRowSelection={state.withRowSelection}
+          {...(state.withRowExpanding
+            ? {
+                withRowExpanding: true,
+                getRowCanExpand: () => true,
+                renderSubComponent: (row) => (
+                  <pre
+                    style={{
+                      width: row.getVisibleCells().reduce((prev, curr) => prev + curr.column.getSize(), 0),
+                      overflow: 'auto',
+                    }}
+                    children={JSON.stringify(row.original, null, 2)}
+                  />
+                ),
+                onRow: (row) => ({
+                  onClick: row.getToggleExpandedHandler(),
+                  style: { cursor: 'pointer' },
+                }),
+              }
+            : {})}
           noFlexLayout={state.noFlexLayout}
           striped={state.striped}
+          withBorder={state.withBorder}
+          withColumnBorders={state.withColumnBorders}
           highlightOnHover={state.highlightOnHover}
           loading={state.loading}
           iconColor={state.iconColor}
@@ -163,7 +189,7 @@ export default function Demo() {
             {
               accessorKey: 'id',
               header: 'No',
-              size: 60,
+              minSize: 64,
             },
             {
               accessorKey: 'text',
@@ -172,6 +198,8 @@ export default function Demo() {
                 title: 'Filter with Title',
               }),
               size: 200,
+              minSize: 100,
+              maxSize: 400,
               cell: highlightFilterValue,
             },
             {
@@ -182,18 +210,18 @@ export default function Demo() {
                   accessorKey: 'fish',
                   filterFn: createStringFilter({
                     title: 'Filter with only includes operator',
-                    fixedOperator: StringFilterOperator.Includes,
+                    operators: [stringOperators.includes()],
                   }),
                 },
               ],
             },
             {
               accessorKey: 'city',
-              filterFn: createStringFilter({}),
+              filterFn: stringFilterFn,
             },
             {
               accessorKey: 'value',
-              filterFn: createNumberFilter({}),
+              filterFn: numberFilterFn,
             },
             {
               accessorKey: 'date',
@@ -268,6 +296,24 @@ export default function Demo() {
               })
             }
           />
+          <Switch
+            label="With row selection"
+            checked={state.withRowSelection}
+            onChange={(e) =>
+              update({
+                withRowSelection: e.target.checked,
+              })
+            }
+          />
+          <Switch
+            label="With row expanding"
+            checked={state.withRowExpanding}
+            onChange={(e) =>
+              update({
+                withRowExpanding: e.target.checked,
+              })
+            }
+          />
           <Text color="dimmed">Styles</Text>
           <Switch
             label="No flex layout"
@@ -308,20 +354,29 @@ export default function Demo() {
             }
           />
           <Switch
-            label="No Text ellipsis"
-            checked={state.noEllipsis}
-            onChange={(e) =>
-              update({
-                noEllipsis: e.target.checked,
-              })
-            }
-          />
-          <Switch
             label="Striped"
             checked={state.striped}
             onChange={(e) =>
               update({
                 striped: e.target.checked,
+              })
+            }
+          />
+          <Switch
+            label="With Border"
+            checked={state.withBorder}
+            onChange={(e) =>
+              update({
+                withBorder: e.target.checked,
+              })
+            }
+          />
+          <Switch
+            label="With Column Borders"
+            checked={state.withColumnBorders}
+            onChange={(e) =>
+              update({
+                withColumnBorders: e.target.checked,
               })
             }
           />

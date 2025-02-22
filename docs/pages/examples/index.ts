@@ -39,6 +39,10 @@ import RowSelectionExample from './RowSelectionExample';
 // @ts-ignore
 import RowSelectionExampleCode from './RowSelectionExample.tsx?raw';
 
+import SingleRowSelectionExample from './SingleRowSelectionExample';
+// @ts-ignore
+import SingleRowSelectionExampleCode from './SingleRowSelectionExample.tsx?raw';
+
 import StateExample from './StateExample';
 // @ts-ignore
 import StateExampleCode from './StateExample.tsx?raw';
@@ -50,6 +54,30 @@ import StylesExampleCode from './StylesExample.tsx?raw';
 import ExternalFilterExample from './ExternalFilterExample';
 // @ts-ignore
 import ExternalFilterExampleCode from './ExternalFilterExample.tsx?raw';
+
+import ColumnDragDropExample from './ColumnDragDropExample';
+// @ts-ignore
+import ColumnDragDropExampleCode from './ColumnDragDropExample.tsx?raw';
+
+import CustomPaginationExample from './CustomPaginationExample';
+// @ts-ignore
+import CustomPaginationExampleCode from './CustomPaginationExample.tsx?raw';
+
+import EditableExample from './EditableExample';
+// @ts-ignore
+import EditableExampleCode from './EditableExample.tsx?raw';
+
+import RowExpandingExample from './RowExpandingExample';
+// @ts-ignore
+import RowExpandingExampleCode from './RowExpandingExample.tsx?raw';
+
+import NestedExample from './NestedExample';
+// @ts-ignore
+import NestedExampleCode from './NestedExample.tsx?raw';
+
+import ResetFilterExample from './ResetFilterExample';
+// @ts-ignore
+import ResetFilterExampleCode from './ResetFilterExample.tsx?raw';
 
 export type Example = {
   label: string;
@@ -96,12 +124,6 @@ export const examples = {
     element: OnRowClickExample,
     code: OnRowClickExampleCode,
   }),
-  filters: ex({
-    label: 'Column Filters',
-    path: '/example/filters',
-    element: CustomFilterExample,
-    code: CustomFilterExampleCode,
-  }),
   empty: ex({
     label: 'Empty Grid',
     path: '/example/empty',
@@ -132,10 +154,52 @@ export const examples = {
     element: RowSelectionExample,
     code: RowSelectionExampleCode,
   }),
+  singleRowSelection: ex({
+    label: 'Single Row selection',
+    path: '/example/singlerowselection',
+    element: SingleRowSelectionExample,
+    code: SingleRowSelectionExampleCode,
+  }),
   override: ex({
     label: 'External filter',
     path: '/example/externalfilter',
     element: ExternalFilterExample,
     code: ExternalFilterExampleCode,
+  }),
+  columnDragDrop: ex({
+    label: 'Column Drag&Drop',
+    path: '/example/column-drag-drop',
+    element: ColumnDragDropExample,
+    code: ColumnDragDropExampleCode,
+  }),
+  customPagination: ex({
+    label: 'Custom Pagination',
+    path: '/example/pagination',
+    element: CustomPaginationExample,
+    code: CustomPaginationExampleCode,
+  }),
+  editable: ex({
+    label: 'Editable Cell',
+    path: '/example/editable',
+    element: EditableExample,
+    code: EditableExampleCode,
+  }),
+  expanding: ex({
+    label: 'Row Expanding',
+    path: '/example/expanding',
+    element: RowExpandingExample,
+    code: RowExpandingExampleCode,
+  }),
+  nested: ex({
+    label: 'Nested Data example',
+    path: '/example/nested',
+    element: NestedExample,
+    code: NestedExampleCode,
+  }),
+  reset: ex({
+    label: 'Reset Filter',
+    path: '/example/reset',
+    element: ResetFilterExample,
+    code: ResetFilterExampleCode,
   }),
 };

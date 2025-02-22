@@ -16,7 +16,7 @@ const ellipsis: CSSObject = {
 };
 
 export default createStyles(
-  (theme, { height, width, noEllipsis, withFixedHeader, paginationMode = 'default' }: DataGridStylesParams) => ({
+  (theme, { height, width, withFixedHeader, paginationMode = 'default' }: DataGridStylesParams) => ({
     wrapper: {
       height: height ? height + 'px' : undefined,
       width: width ? width + 'px' : undefined,
@@ -29,6 +29,8 @@ export default createStyles(
     table: {
       borderCollapse: 'separate',
       borderSpacing: 0,
+      borderLeft: 'none',
+      borderRight: 'none',
     },
     thead: {
       position: 'relative',
@@ -46,36 +48,24 @@ export default createStyles(
         top: 0,
         backgroundColor: theme.colorScheme === 'dark' ? theme.colors.dark[7] : theme.white,
         transition: 'box-shadow 150ms ease',
+        zIndex: 2,
       }),
     },
     tbody: {
       minHeight: '160px',
     },
-    tr: {},
-    th: { position: 'relative' },
-    td: {},
-    headerCell: {
+    tr: {
       display: 'flex',
-      width: 'inherit',
-      height: 'inherit',
-      justifyContent: 'space-between',
     },
-    headerCellContent: {
-      ...(!noEllipsis && ellipsis),
-    },
+    th: { position: 'relative', display: 'flex', height: 'inherit', justifyContent: 'space-between' },
+    td: { display: 'flex', justifyContent: 'space-between' },
+    headerCellContent: ellipsis,
     headerCellButtons: {
       display: 'inline-flex',
       gap: '4px',
       alignItems: 'center',
     },
-    dataCell: {
-      display: 'flex',
-      width: 'inherit',
-      justifyContent: 'space-between',
-    },
-    dataCellContent: {
-      ...(!noEllipsis && ellipsis),
-    },
+    dataCellContent: ellipsis,
     resizer: {
       position: 'absolute',
       top: 0,
@@ -88,6 +78,10 @@ export default createStyles(
         backgroundColor: theme.colors.dark[5],
       },
     },
+    isResizing: {
+      userSelect: 'none',
+      backgroundColor: theme.fn.primaryColor(theme.colorScheme),
+    },
     sorter: {},
     filter: {},
     globalFilter: {},
@@ -96,7 +90,7 @@ export default createStyles(
       justifyContent: 'center',
       alignItems: 'center',
 
-      [`@media (min-width: ${theme.breakpoints.xl}px)`]: {
+      [`@media (min-width: ${theme.breakpoints.xl})`]: {
         justifyContent: paginationMode === 'default' ? 'space-between' : 'flex-end',
       },
     },
@@ -104,7 +98,7 @@ export default createStyles(
     pagination_info: {
       display: 'none',
 
-      [`@media (min-width: ${theme.breakpoints.xl}px)`]: {
+      [`@media (min-width: ${theme.breakpoints.xl})`]: {
         display: 'inline-block',
       },
     },
@@ -112,7 +106,7 @@ export default createStyles(
     pagination_size: {
       display: 'none',
 
-      [`@media (min-width: ${theme.breakpoints.xl}px)`]: {
+      [`@media (min-width: ${theme.breakpoints.xl})`]: {
         display: 'flex',
         alignItems: 'center',
         gap: `${theme.spacing.xs}px`,

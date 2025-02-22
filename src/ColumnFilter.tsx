@@ -1,61 +1,62 @@
 import { ActionIcon, Button, Group, Menu, Stack } from '@mantine/core';
+import { useSetState } from '@mantine/hooks';
+import { IconCheck, IconFilter, IconX } from '@tabler/icons-react';
 import { Column } from '@tanstack/react-table';
 import { createElement, useState } from 'react';
-import { Check, Filter, X } from 'tabler-icons-react';
-import { isDataGridFilter } from './types';
+import { DataGridFilterFn, isDataGridFilter } from './filters/types';
 
 export interface ColumnFilterProps {
-  column: Column<any, any>;
+  column: Column<any, unknown>;
+  filterFn: DataGridFilterFn<unknown>;
   className: string;
   color: string;
 }
 
-export const ColumnFilter = ({ column, className, color }: ColumnFilterProps) => {
-  const [state, setState] = useState(null as null | { value: any });
+export const DefaultColumnFilter = function ColumnFilter({ column, className, color, filterFn }: ColumnFilterProps) {
+  const [state, setState] = useSetState({ open: false, value: null as unknown });
 
-  const filterFn = column.columnDef.filterFn;
-
-  if (!isDataGridFilter(filterFn)) return null;
-
-  const { element: Element, init } = filterFn;
-
-  const open = () =>
+  const handleOpen = () =>
     setState({
-      value: column.getFilterValue() || init(),
+      open: true,
+      value: column.getFilterValue() || filterFn.init(),
     });
 
-  const close = () => setState(null);
+  const handleChange = (value: unknown) => setState({ value });
 
-  const change = (value: any) => setState({ value });
+  const handleClose = () => {
+    setState({ open: false });
+  };
 
-  const clear = () => {
+  const handleClear = () => {
     column.setFilterValue(undefined);
-    close();
+    handleClose();
   };
 
-  const save = () => {
-    if (!state) return;
+  const handleSave = () => {
     column.setFilterValue(state.value);
-    close();
+    handleClose();
   };
+
+  const { element: Element } = filterFn;
 
   return (
     <Menu
-      opened={!!state}
+      opened={state.open}
       position="bottom"
       withArrow
-      transition="scale-y"
+      transitionProps={{
+        transition: 'scale-y',
+      }}
       shadow="xl"
-      onClose={close}
-      closeOnClickOutside={false}
+      onClose={handleClose}
       width="256px"
       withinPortal
     >
       <Menu.Target>
         <ActionIcon
           size="xs"
-          children={<Filter size={16} />}
-          onClick={open}
+          children={<IconFilter size={16} />}
+          onClick={handleOpen}
           className={className}
           variant={column.getIsFiltered() ? 'light' : 'transparent'}
           color={column.getIsFiltered() ? color : 'gray'}
@@ -64,11 +65,25 @@ export const ColumnFilter = ({ column, className, color }: ColumnFilterProps) =>
       <Menu.Dropdown>
         {!!state && (
           <Stack p="xs">
-            <Element filter={state.value} onFilterChange={change} />
+            <Element filter={state.value} onFilterChange={handleChange} />
 
             <Group position="apart">
-              <Button children={<X />} color="gray" onClick={clear} compact />
-              <Button children={<Check />} onClick={save} compact variant="outline" />
+              <Button
+                children={<IconX />}
+                color="gray"
+                onClick={handleClear}
+                compact
+                type="reset"
+                aria-label="Reste Filter"
+              />
+              <Button
+                children={<IconCheck />}
+                onClick={handleSave}
+                compact
+                variant="outline"
+                type="submit"
+                aria-label="Save Filter"
+              />
             </Group>
           </Stack>
         )}

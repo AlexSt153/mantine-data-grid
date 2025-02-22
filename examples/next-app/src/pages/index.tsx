@@ -1,29 +1,28 @@
-import { Button } from '@mantine/core';
-import { RowSelectionState } from '@tanstack/react-table';
-import { useState } from 'react';
+import { Button, Group, Stack, Title, useMantineColorScheme } from '@mantine/core';
 import {
-  booleanFilterFn,
   DataGrid,
+  booleanFilterFn,
   dateFilterFn,
   highlightFilterValue,
   numberFilterFn,
   stringFilterFn,
-} from '../../../src';
-import { demoData } from '../../demoData';
+} from 'mantine-data-grid';
+import { useEffect, useState } from 'react';
+import { Data, demoData } from '../data/demoData';
 
-export default function RowSelectionExample() {
-  const [data, setData] = useState(demoData);
-  const [selected, setSelected] = useState<RowSelectionState>({});
-
-  const removeSelected = () => {
-    const next = data.filter((_, i) => !selected[i]);
-    setSelected({});
-    setData(next);
-  };
+export default function Home({}) {
+  const [data, setData] = useState<Data[]>([]);
+  useEffect(() => setData(demoData), []);
+  const { colorScheme, toggleColorScheme } = useMantineColorScheme();
 
   return (
-    <>
-      <Button onClick={removeSelected}>Remove Selected</Button>
+    <Stack p="md">
+      <Group position="apart">
+        <Title>next example</Title>
+        <Button variant="outline" onClick={(e) => toggleColorScheme()}>
+          {colorScheme}
+        </Button>
+      </Group>
       <DataGrid
         data={data}
         striped
@@ -33,11 +32,6 @@ export default function RowSelectionExample() {
         withColumnFilters
         withSorting
         withColumnResizing
-        withRowSelection
-        state={{
-          rowSelection: selected,
-        }}
-        onRowSelectionChange={setSelected}
         columns={[
           {
             accessorKey: 'text',
@@ -72,6 +66,6 @@ export default function RowSelectionExample() {
           },
         ]}
       />
-    </>
+    </Stack>
   );
 }
